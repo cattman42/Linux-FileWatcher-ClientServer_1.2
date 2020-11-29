@@ -1,0 +1,11 @@
+[Unit]
+Description= Server use of 11 Supplement
+After=network.target
+
+[Service]
+Type=forking
+PIDFile=/run/bu.pid
+ExecStart=/usr/sbin/bu
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,11 @@
+[Unit]
+Description= Client use of 12
+After=network.target
+
+[Service]
+Type=forking
+PIDFile=/run/fwd.pid
+ExecStart=/usr/sbin/fwd
+
+[Install]
+WantedBy=multi-user.target
