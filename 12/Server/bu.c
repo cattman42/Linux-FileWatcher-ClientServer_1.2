@@ -114,10 +114,6 @@ void client_comm(char *location,int connfd)
   Rio_readinitb(&rio, connfd);
   Rio_readlineb(&rio, buf, MAXLINE);
   if(strcmp(buf, "status\n") == 0) {
-    /** The client will send you a folder name first, telling you which subfolder
-        of /var/bu they want you to work with. The first thing you should do is
-        to check to see if the folder exists. If not, you need to create it with
-        mkdir(). **/
     n = Rio_readlineb(&rio, fileName, MAXLINE);
     strtok(fileName,"\n");
     strcpy(path,location);
@@ -225,6 +221,3 @@ int main(int argc, char **argv)
   logClose();
   exit(0);
 }
-
-/** A few problems here, more problems in fwd.c. See my comments for details.
-    Your grade for this assignment is 22/30. **/
