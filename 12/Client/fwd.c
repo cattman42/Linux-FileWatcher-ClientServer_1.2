@@ -134,7 +134,6 @@ void status(char* host,char* port,char* fileNameRaw, char* folder){
   char *cmd;
   cmd = "status\n";
   Rio_writen(clientfd, cmd, strlen(cmd));
-  /** You need to send the server the remote folder name along with the file name. **/
   char filename[50];
   sprintf(filename, "%s\n",fileNameRaw);
   Rio_writen(clientfd, filename, strlen(filename));
@@ -153,7 +152,6 @@ void upload(char* host,char* port,char* location,char* fileNameRaw, off_t size){
   char filename[50];
   sprintf(filename, "%s\n",fileNameRaw);
   Rio_writen(clientfd, cmd, strlen(cmd));
-  /** You need to send the server the remote folder name along with the file name. **/
   Rio_writen(clientfd, filename, strlen(filename));
   char buffer[32];
   sprintf(buffer,"%ld\n",s.st_size);
@@ -193,15 +191,7 @@ void *thread(int i, void *vargp){
     }
     DIR = opendir(location);
     while((entp = readdir(DIR))!=NULL) {
-      /** You did not read the problem statement carefully enough.
-          The problem statement says that each line in the configuration file
-          has two parts: a path to a folder to watch, and a name to use for the
-          remote folder on the server.
-
-          You need to add code here that splits the line into the folder path and
-          the remote name. When you send the request, you need to send the remote
-          folder name along with the file name. **/
-      strcpy(path,location); /** Location should be folderPath. **/
+      strcpy(path,location);
       strcat(path,"/");
       strcat(path,entp->d_name);
       stat(path,&s);
@@ -209,13 +199,7 @@ void *thread(int i, void *vargp){
       /* Only pay attention to files, and ignore directories. */
       if(S_ISREG(s.st_mode)) {
         if(firstScan == 1) {
-          status(hostname,port,entp->d_name, ); /** Send folderName as a parameter, too. **/
-          /** You are having the status function return its result to you in a global
-          variable. This is the wrong thing to do with thread code. You could easily
-          get into a situation where two threads are calling status at the same time and
-          those two calls to status both try to write to buff at the same time. The
-          correct way to do this is to set up the buff array as a local variable in this
-          function and then pass a pointer to that array as a parameter to status. **/
+          status(hostname,port,entp->d_name, );
           char *ptr;
           long time;
           time_t server_time;
@@ -223,23 +207,23 @@ void *thread(int i, void *vargp){
           server_time = (time_t)time;
           time_t client_time = s.st_mtime;
           if(strcmp(buff, "0\n") == 0 || difftime(client_time,server_time) > 0) {
-            upload(hostname,port,location,entp->d_name, s.st_size); /** Pass remote folder name as a parameter as well. **/
+            upload(hostname,port,location,entp->d_name, s.st_size); 
           }
           firstScan = 0;
           }
         else {
           if(difftime(s.st_mtime,timer) > 0) {
-            upload(hostname,port,location,entp->d_name, s.st_size); /** Pass remote folder name as a parameter as well. **/
+            upload(hostname,port,location,entp->d_name, s.st_size); 
           }
         }
       }
     }
-    logClose(); /** You should not call this here. **/
+    logClose(); 
     closedir(DIR);
     time(&timer);
     sleep(300);
   }
-  exit(0); /** Replace with return NULL; **/
+  exit(0); 
 }
 
 int main(int argc, char **argv)
@@ -247,10 +231,10 @@ int main(int argc, char **argv)
   struct sigaction action, old_action;
   FILE *logFile;
   char hostname[MAXLINE], port[MAXLINE];
-  char locationArray[count-3]; /** Should be char* **location; **/
+  char locationArray[count-3];
   char myHome[MAXLINE];
   struct sigaction sa;
-  sem_init(mutex, 0, 1); /** This belongs in main. **/
+  sem_init(mutex, 0, 1); 
 
   /* Install the handler for SIGTERM */
   action.sa_handler = handleTERM;
@@ -278,20 +262,14 @@ int main(int argc, char **argv)
     fprintf(stderr, "Failed becomeDaemon\n");
     exit(1);
   }
-  for(int i = 0; i < count-3; i++){ /** <= should be < here. **/
+  for(int i = 0; i < count-3; i++){
     thread_params input;
-    strcpy(input.location, locationArray[i]); /** Should be (*location)[i] **/
+    strcpy(input.location, locationArray[i]); 
     strcpy(input.hostname, hostname);
     strcpy(input.port, port);
     pthread_t tid;
     Pthread_create(&tid, NULL, thread, &input);
-    /** Your strategy for passing data to the thread suffers from a race condition.
-    There will be race between the thread code, which tries to read data from
-    the input structure, and this loop, which wants to overwrite the data in
-    the input structure. The correct approach here is to make input be a pointer
-    to a thread_params struct. You allocate a separate structure with malloc
-    for each of the threads, and copy that thread's data into its own separate
-    structure. You then pass the pointer to that structure to the thread. **/
+
   }
 
   while(run == 1) {
@@ -304,6 +282,4 @@ int main(int argc, char **argv)
   }
   logCLose();
   sleep(300);
-  /** This code suffers from the premature exit problem. See the chapter 12
-  assignment FAQ for a discussion of this problem. **/
 }
